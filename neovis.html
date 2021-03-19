@@ -1,0 +1,108 @@
+<!doctype html>
+<html>
+<head>
+    <title>Zeek connections</title>
+
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://kit.fontawesome.com/62dc4ec543.js" crossorigin="anonymous"></script>
+
+    <!-- FIXME: load from dist -->
+    <!-- <script type="text/javascript" src="../dist/neovis.js"></script> -->
+    <!-- <script type="text/javascript" src="https://rawgit.com/neo4j-contrib/neovis.js/master/dist/neovis.js"></script>-->
+    <script type="text/javascript" src="neovis.js"></script>
+
+    <script
+            src="https://code.jquery.com/jquery-3.2.1.min.js"
+            integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+            crossorigin="anonymous"></script>
+
+    <script type="text/javascript">
+        // define config car
+        // instantiate nodevis object
+        // draw
+        var viz;
+
+        function draw() {
+            var config = {
+                container_id: "viz",
+                server_url: "bolt://neo4j.woolford.io:7687",
+                server_user: "neo4j",
+                server_password: "V1ctoria",
+                server_database: "zeek",
+                labels: {
+                    "IP": {
+                        "caption": "id",
+                        "size": "degree",
+                        "community": "community"
+                    }
+                },
+                relationships: {
+                    "CONNECTED_TO": {
+                        "thickness": "connections",
+                        "caption": false
+                    }
+                },
+                initial_cypher: "MATCH (x)-[y:CONNECTED_TO]->(z) RETURN *",
+                arrows: true
+            };
+            viz = new NeoVis.default(config);
+            viz.render();
+            console.log(viz);
+        }
+    </script>
+</head>
+
+<body onload="draw()">
+
+        <div id="viz"></div>
+
+        <button class="btn" onclick="deleteAllNodesAndRelationships()"><i class="fa fa-trash"></i> delete all</button>
+        <button class="btn" onclick="resumeConnNeo4jSink()"><i class="fa fa-play"></i> resume sink</button>
+        <button class="btn" onclick="pauseConnNeo4jSink()"><i class="fa fa-pause"></i> pause sink</button>
+        <button class="btn" onclick="applyLouvainCommunity()"><i class="fa fa-project-diagram"></i> Louvain community</button>
+        <button class="btn" onclick="redraw()"><i class="fa fa-pencil"></i> draw</button>
+        <button class="btn" onclick="stabilize()"><i class="fa fa-compress-arrows-alt"></i> stabilize</button>
+
+</body>
+
+<script>
+
+    function deleteAllNodesAndRelationships() {
+        console.log("deleting all nodes and relationships");
+        var cypher = "MATCH (n) DETACH DELETE n";
+        viz.renderWithCypher(cypher);
+        viz.reload();
+    }
+
+    function resumeConnNeo4jSink() {
+        // Content-Type: application/json
+        fetch("http://cp01.woolford.io:8083/connectors/conn-neo4j/resume", {mode: 'cors', method: 'PUT'})
+        console.log("conn-neo4j sink resumed")
+    }
+
+    function pauseConnNeo4jSink() {
+        fetch("http://cp01.woolford.io:8083/connectors/conn-neo4j/pause", {mode: 'cors', method: 'PUT'})
+        console.log("conn-neo4j sink paused")
+    }
+
+    function applyLouvainCommunity() {
+        console.log("assigning Louvain community to the IP nodes");
+        var cypher = "CALL gds.louvain.write({ nodeProjection: 'IP', relationshipProjection: 'CONNECTED_TO', writeProperty: 'community' })";
+        viz.renderWithCypher(cypher);
+    }
+
+    function redraw() {
+        console.log("re-drawing the graph");
+        var cypher = "MATCH (x)-[y:CONNECTED_TO]->(z) RETURN *";
+        viz.renderWithCypher(cypher);
+        viz.reload();
+    }
+
+    function stabilize() {
+        console.log("stabilizing graph");
+        viz.stabilize();
+    }
+
+</script>
+
+</html>

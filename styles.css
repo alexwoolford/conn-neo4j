@@ -1,0 +1,40 @@
+html, body {
+    font: 16pt arial;
+    height: 100%;
+    width: 100%;
+    margin: 0;
+}
+
+#viz {
+    /*width: 1650px;*/
+    /*height: 850px;*/
+    border: 1px solid lightgray;
+    font: 22pt arial;
+    /*object-fit: fill;*/
+    width: auto;
+    height: 80%;
+}
+
+/* Split the screen in half */
+.split {
+    height: 100%;
+    width: 50%;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    overflow-x: hidden;
+    padding-top: 20px;
+}
+
+/* Control the left side */
+.left {
+    left: 0;
+    background-color: #FFF;
+}
+
+/* Control the right side */
+.right {
+    right: 0;
+    background-color: #FFF;
+}
+
